@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>培根遊戲</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #f8e1c4;
+            overflow: hidden;
+        }
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        .food {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .bacon {
+            position: absolute;
+            width: 120px;
+            height: 40px;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: transform 0.5s ease-out;
+        }
+        .bacon.fixed {
+            bottom: 250px; /* 讓培根重疊在食物的上方 */
+            left: 50%;
+            transform: translateX(-50%) rotate(0deg); /* 移除旋轉 */
+            transition: none; /* 停止所有過渡效果 */
+        }
+        #flashImage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('https://i.imgur.com/Jomg7Xu.jpeg'); /* 設定圖片A的URL */
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" onclick="jumpBacon()">
+        <img src="https://i.imgur.com/ZjmuVHK.png" class="food" id="food">
+        <img src="https://i.imgur.com/8k4i4cR.png" class="bacon" id="bacon">
+    </div>
+    <div id="flashImage"></div> <!-- 全螢幕圖片A -->
+    
+    <!-- 音樂 -->
+    <audio id="backgroundMusic" src="C:\Users\USER\Downloads\geistergeheul-252843.mp3" preload="auto"></audio>
+
+    <script>
+        let bacon = document.getElementById("bacon");
+        let food = document.getElementById("food");
+        let flashImage = document.getElementById("flashImage");
+        let backgroundMusic = document.getElementById("backgroundMusic"); // 音樂元素
+        let isJumping = false;
+        let gameOver = false;  // 控制遊戲是否結束
+        
+        function jumpBacon() {
+            if (isJumping || gameOver) return;  // 若遊戲已結束或正在跳躍，則不執行
+            
+            isJumping = true;
+            let randomX = Math.random() * 200 - 100; // 隨機偏移量
+            
+            bacon.style.transform = `translate(${randomX}px, -200px) rotate(${Math.random() * 360}deg)`;
+            
+            setTimeout(() => {
+                bacon.style.transform = `translate(${randomX}px, 100px) rotate(${Math.random() * 360}deg)`;
+                checkWin(randomX);
+            }, 500);
+        }
+
+        function checkWin(offsetX) {
+            setTimeout(() => {
+                let foodRect = food.getBoundingClientRect();
+                let baconRect = bacon.getBoundingClientRect();
+                
+                if (
+                    baconRect.left > foodRect.left - 20 && 
+                    baconRect.right < foodRect.right + 20 && 
+                    baconRect.bottom > foodRect.top
+                ) {
+                    alert("成功放上培根！");
+                    bacon.classList.add("fixed"); // 培根固定在食物上
+                    gameOver = true;  // 遊戲結束
+                    setTimeout(startFlashing, 2000);  // 2秒後開始閃現圖片A
+                } else {
+                    alert("挑戰失敗，再試一次！");
+                    bacon.style.transform = "translateX(-50%)"; // 重置位置
+                }
+                isJumping = false;
+            }, 500);
+        }
+
+        function startFlashing() {
+            let flashCount = 0;
+            flashImage.style.visibility = 'visible'; // 顯示圖片A
+            flashImage.style.opacity = 1; // 開始顯示圖片A
+            
+            // 播放音樂
+            backgroundMusic.play();
+
+            // 閃爍的間隔時間（毫秒）
+            const intervals = [1000, 500, 500, 2000, 3000]; // 依序為 1秒、0.5秒、0.5秒、2秒、3秒
+
+            // 閃爍的函數
+            function flash() {
+                flashImage.style.opacity = (flashImage.style.opacity == 0) ? 1 : 0; // 每次切換顯示與隱藏
+                flashCount++;
+
+                if (flashCount >= 5) { // 完成5次閃爍後停止
+                    flashImage.style.visibility = 'hidden'; // 隱藏圖片A
+                    backgroundMusic.pause(); // 停止音樂播放
+                } else {
+                    // 設置下一次閃爍的時間間隔
+                    setTimeout(flash, intervals[flashCount]);
+                }
+            }
+
+            // 開始第一次閃爍
+            setTimeout(flash, intervals[flashCount]);
+        }
+    </script>
+</body>
+</html>
